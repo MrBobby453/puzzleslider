@@ -66,7 +66,18 @@
       justify-content: center;
       gap: 10px;
     }
-    #controls button, #controls label, #timer, #moveCount {
+    #controls button {
+      background: #444;
+      border: 1px solid #888;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: white;
+    }
+    #controls button:hover {
+      background: #666;
+    }
+    #controls label, #timer, #moveCount {
       font-size: 14px;
       color: white;
     }
@@ -118,7 +129,7 @@
         if (i === emptyIndex) tile.classList.add('empty');
         else {
           const x = i % size, y = Math.floor(i / size);
-          tile.style.backgroundPosition = `${-x * 100 / 3}% ${-y * 100 / 3}%`;
+          tile.style.backgroundPosition = `${-x * 100 / (size - 1)}% ${-y * 100 / (size - 1)}%`;
           if (toggleNumbers.checked) tile.textContent = i + 1;
         }
         tiles.push(tile);
@@ -151,7 +162,13 @@
       puzzle.style.setProperty('--guide-opacity', toggleGuide.checked ? 0.2 : 0);
       tiles.forEach((tile, i) => {
         tile.dataset.index = i;
-        if (!tile.classList.contains('empty')) tile.textContent = toggleNumbers.checked ? (parseInt(tile.dataset.original) + 1) : '';
+
+        const original = parseInt(tile.dataset.original);
+        const x = original % size;
+        const y = Math.floor(original / size);
+        tile.style.backgroundPosition = `${-x * 100 / (size - 1)}% ${-y * 100 / (size - 1)}%`;
+
+        tile.textContent = (!tile.classList.contains('empty') && toggleNumbers.checked) ? (original + 1) : '';
         puzzle.appendChild(tile);
       });
     }
@@ -175,11 +192,6 @@
 
     function checkWin() {
       return tiles.every((t, i) => t.classList.contains('empty') ? i === tiles.length - 1 : parseInt(t.dataset.original) === i);
-    }
-
-    function solvePuzzle(startArr) {
-      // Skipped for performance
-      return [];
     }
 
     puzzle.addEventListener('pointerdown', e => {
