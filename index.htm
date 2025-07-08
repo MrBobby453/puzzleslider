@@ -7,22 +7,38 @@
   <style>
     body {
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
       background: #222;
       margin: 0;
+      color: white;
+    }
+    #puzzle-container {
+      position: relative;
     }
     #puzzle {
       display: grid;
       grid-template-columns: repeat(4, 100px);
       grid-template-rows: repeat(4, 100px);
       gap: 2px;
+      --guide-opacity: 0.2;
+    }
+    #puzzle::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: url('/mnt/data/wreck it rach.png') center / cover no-repeat;
+      opacity: var(--guide-opacity);
+      z-index: 0;
     }
     .tile {
+      position: relative;
       width: 100px;
       height: 100px;
-      background-image: url('wreck_it_rach.png');
+      background-image: url('/mnt/data/wreck it rach.png');
       background-size: 400px 400px;
       cursor: pointer;
       border: 1px solid #000;
@@ -30,100 +46,135 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      color: white;
+      font-size: 14px;
+      z-index: 1;
     }
-    .empty {
-      background: #000;
-      cursor: default;
+    .empty { background: #000; cursor: default; }
+    #controls {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
     }
+    #controls button, #controls label { font-size: 14px; color: white; }
+    #timer { font-size: 16px; }
+    input[type='checkbox'] { transform: scale(1.2); }
   </style>
 </head>
 <body>
-  <div id="puzzle"></div>
+  <div id="puzzle-container">
+    <div id="puzzle"></div>
+  </div>
+  <div id="controls">
+    <button id="resetBtn">Reset</button>
+    <span id="moveCount">Moves: 0</span>
+    <span id="timer">Time: 00:00</span>
+    <label><input type="checkbox" id="toggleGuide" checked> Guide</label>
+    <label><input type="checkbox" id="toggleNumbers" checked> Numbers</label>
+  </div>
   <script>
     const puzzle = document.getElementById('puzzle');
+    const resetBtn = document.getElementById('resetBtn');
+    const moveCountEl = document.getElementById('moveCount');
+    const timerEl = document.getElementById('timer');
+    const toggleGuide = document.getElementById('toggleGuide');
+    const toggleNumbers = document.getElementById('toggleNumbers');
     const size = 4;
-    let tiles = [];
-    let emptyIndex = size * size - 1;
+    let tiles = [], emptyIndex = size*size-1, moves=0;
+    let startTime, timerInterval;
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const diff = Date.now() - startTime;
+        const s = Math.floor(diff/1000) % 60;
+        const m = Math.floor(diff/60000);
+        timerEl.textContent = `Time: ${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+      }, 500);
+    }
 
     function createTiles() {
-      tiles = [];
-      for (let i = 0; i < size * size; i++) {
-        const tile = document.createElement('div');
-        tile.className = 'tile';
-        tile.dataset.original = i;
-        if (i === emptyIndex) {
-          tile.classList.add('empty');
-        } else {
-          const x = i % size;
-          const y = Math.floor(i / size);
-          tile.style.backgroundPosition = `-${x * 100}px -${y * 100}px`;
+      tiles=[]; moves=0;
+      moveCountEl.textContent='Moves: 0';
+      puzzle.style.setProperty('--guide-opacity', toggleGuide.checked?0.2:0);
+      for(let i=0;i<size*size;i++){
+        const tile=document.createElement('div');
+        tile.className='tile'; tile.dataset.original=i;
+        if(i===emptyIndex){ tile.classList.add('empty'); }
+        else{
+          const x=i%size, y=Math.floor(i/size);
+          tile.style.backgroundPosition=`-${x*100}px -${y*100}px`;
+          if(toggleNumbers.checked) tile.textContent=(i+1);
         }
         tiles.push(tile);
       }
-      shuffleTiles();
-      drawTiles();
+      shuffleTiles(); drawTiles(); startTimer();
     }
 
-    function shuffleTiles() {
-      do {
-        for (let i = tiles.length - 2; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+    function shuffleTiles(){
+      do{
+        for(let i=tiles.length-2;i>0;i--){
+          const j=Math.floor(Math.random()*(i+1));
+          [tiles[i],tiles[j]]=[tiles[j],tiles[i]];
         }
-        emptyIndex = tiles.findIndex(t => t.classList.contains('empty'));
-      } while (!isSolvable());
+        emptyIndex=tiles.findIndex(t=>t.classList.contains('empty'));
+      }while(!isSolvable());
     }
 
-    function isSolvable() {
-      const arr = tiles.map(t => t.classList.contains('empty') ? 0 : parseInt(t.dataset.original) + 1);
-      let inv = 0;
-      for (let i = 0; i < arr.length; i++) {
-        for (let j = i + 1; j < arr.length; j++) {
-          if (arr[i] && arr[j] && arr[i] > arr[j]) inv++;
+    function isSolvable(){
+      const arr=tiles.map(t=>t.classList.contains('empty')?0:parseInt(t.dataset.original)+1);
+      let inv=0;
+      for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++)if(arr[i]&&arr[j]&&arr[i]>arr[j])inv++;
+      const row=Math.floor(emptyIndex/size);
+      return (inv+row)%2===0;
+    }
+
+    function drawTiles(){
+      puzzle.innerHTML='';
+      puzzle.style.setProperty('--guide-opacity', toggleGuide.checked?0.2:0);
+      tiles.forEach((tile,i)=>{
+        tile.dataset.index=i;
+        if(!tile.classList.contains('empty')){
+          tile.textContent=toggleNumbers.checked?(parseInt(tile.dataset.original)+1):'';
         }
-      }
-      const row = Math.floor(emptyIndex / size);
-      return (inv + row) % 2 === 0;
-    }
-
-    function drawTiles() {
-      puzzle.innerHTML = '';
-      tiles.forEach((tile, i) => {
-        tile.dataset.index = i;
         puzzle.appendChild(tile);
       });
     }
 
-    function isAdjacent(i1, i2) {
-      const x1 = i1 % size, y1 = Math.floor(i1 / size);
-      const x2 = i2 % size, y2 = Math.floor(i2 / size);
-      return (Math.abs(x1 - x2) + Math.abs(y1 - y2)) === 1;
+    function isAdjacent(i1,i2){
+      const x1=i1%size,y1=Math.floor(i1/size);
+      const x2=i2%size,y2=Math.floor(i2/size);
+      return Math.abs(x1-x2)+Math.abs(y1-y2)===1;
     }
 
-    function checkWin() {
-      for (let i = 0; i < tiles.length; i++) {
-        const orig = parseInt(tiles[i].dataset.original);
-        if (tiles[i].classList.contains('empty')) {
-          if (i !== tiles.length - 1) return false;
-        } else if (orig !== i) return false;
+    function checkWin(){
+      for(let i=0;i<tiles.length;i++){
+        const orig=parseInt(tiles[i].dataset.original);
+        if(tiles[i].classList.contains('empty')){ if(i!==tiles.length-1)return false; }
+        else if(orig!==i) return false;
       }
       return true;
     }
 
-    puzzle.addEventListener('click', e => {
-      const tile = e.target;
-      if (!tile.classList.contains('tile') || tile.classList.contains('empty')) return;
-      const i = tiles.indexOf(tile);
-      const emptyTile = tiles.find(t => t.classList.contains('empty'));
-      const eIdx = tiles.indexOf(emptyTile);
-      if (isAdjacent(i, eIdx)) {
-        [tiles[i], tiles[eIdx]] = [tiles[eIdx], tiles[i]];
+    puzzle.addEventListener('click',e=>{
+      const t=e.target;
+      if(!t.classList.contains('tile')||t.classList.contains('empty'))return;
+      const i=tiles.indexOf(t), eIdx=tiles.findIndex(x=>x.classList.contains('empty'));
+      if(isAdjacent(i,eIdx)){
+        [tiles[i],tiles[eIdx]]=[tiles[eIdx],tiles[i]];
+        moves++; moveCountEl.textContent='Moves: '+moves;
         drawTiles();
-        if (checkWin()) alert('Congratulations! You solved the puzzle!');
+        if(checkWin()){
+          clearInterval(timerInterval);
+          alert(`Solved in ${moves} moves and ${timerEl.textContent.split(' ')[1]}!`);
+        }
       }
     });
+
+    resetBtn.addEventListener('click',createTiles);
+    toggleGuide.addEventListener('change',drawTiles);
+    toggleNumbers.addEventListener('change',drawTiles);
 
     createTiles();
   </script>
