@@ -38,7 +38,7 @@
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: url('wreck_it_rach.png') center / cover no-repeat;
+      background: url('/wreck_it_rach.png') center / cover no-repeat;
       opacity: var(--guide-opacity);
       z-index: 0;
       pointer-events: none;
@@ -95,7 +95,7 @@
     const swoosh = document.getElementById('swoosh');
     const size = 4;
     let tiles = [], emptyIndex = size*size-1, moves=0;
-    let startTime, timerInterval;pn
+    let startTime, timerInterval;
 
     function startTimer() {
       clearInterval(timerInterval);
