@@ -258,22 +258,23 @@
       return (inv + row) % 2 === 0;
     }
 
-    // THE FIXED drawTiles function: background position matches tile INDEX (not original)
+    // FIXED: background-position uses tile.dataset.original so image matches number
     function drawTiles() {
       puzzle.innerHTML = '';
       puzzle.style.setProperty('--guide-opacity', toggleGuide.checked ? 0.2 : 0);
       tiles.forEach((tile, i) => {
         tile.dataset.index = i;
 
-        const x = i % size;
-        const y = Math.floor(i / size);
+        const original = parseInt(tile.dataset.original);
+        const x = original % size;
+        const y = Math.floor(original / size);
         tile.style.backgroundPosition = `${(-x * 100) / (size - 1)}% ${
           (-y * 100) / (size - 1)
         }%`;
 
         tile.textContent =
           !tile.classList.contains('empty') && toggleNumbers.checked
-            ? parseInt(tile.dataset.original) + 1
+            ? original + 1
             : '';
         puzzle.appendChild(tile);
       });
@@ -330,26 +331,13 @@
     resetBtn.addEventListener('click', createTiles);
 
     solveBtn.addEventListener('click', () => {
-      // Sort tiles by original to solve
       tiles.sort((a, b) => a.dataset.original - b.dataset.original);
-
-      // Apply correct background positions by INDEX (not original)
-      tiles.forEach((tile, i) => {
-        const x = i % size;
-        const y = Math.floor(i / size);
-        tile.style.backgroundPosition = `${(-x * 100) / (size - 1)}% ${
-          (-y * 100) / (size - 1)
-        }%`;
-      });
-
       drawTiles();
       clearInterval(timerInterval);
 
-      // Animate solve button
       solveBtn.classList.add('animated');
       setTimeout(() => solveBtn.classList.remove('animated'), 400);
 
-      // Show sparkle + shake on solve
       puzzleContainer.classList.add('shake');
       tiles.forEach((t) => {
         if (!t.classList.contains('empty')) {
