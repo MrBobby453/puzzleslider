@@ -3,78 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <title>Slider Puzzle Game</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: #222;
-      margin: 0;
-      color: white;
-      touch-action: none;
-    }
-    #puzzle-container {
-      position: relative;
-      width: 90vmin;
-      height: 90vmin;
-      max-width: 400px;
-      max-height: 400px;
-    }
-    #puzzle {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      gap: 2px;
-      --guide-opacity: 0.2;
-      width: 100%;
-      height: 100%;
-      position: relative;
-    }
-    #puzzle::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: url('/wreck_it_rach.png') center / cover no-repeat;
-      opacity: var(--guide-opacity);
-      z-index: 0;
-      pointer-events: none;
-    }
-    .tile {
-      position: relative;
-      background-image: url('/wreck_it_rach.png');
-      background-size: 400% 400%;
-      cursor: pointer;
-      border: 1px solid #000;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2vmin;
-      z-index: 1;
-      transition: transform 0.3s ease;
-      touch-action: none;
-    }
-    .empty { background: #000; cursor: default; }
-    #controls {
-      margin-top: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-    }
-    #controls button, #controls label, #timer, #moveCount {
-      font-size: 14px;
-      color: white;
-    }
-    input[type='checkbox'] { transform: scale(1.2); }
+    body { display: flex; flex-direction: column; align-items: center; background: #222; color: white; margin: 0; height: 100vh; justify-content: center; }
+    #puzzle { display: grid; grid-template: repeat(4, 1fr) / repeat(4, 1fr); gap: 2px; width: 320px; height: 320px; position: relative; }
+    #puzzle::before { content: ''; position: absolute; inset: 0; background: url('/wreck_it_rach.png') center/cover no-repeat; opacity: var(--guide-opacity,0.2); pointer-events: none; }
+    .tile { width: 100%; height: 100%; background: url('/wreck_it_rach.png') no-repeat; background-size: 400px 400px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: background-position 0.3s; }
+    .empty { background: #000 !important; cursor: default; }
+    #controls { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    #controls * { font-size: 14px; }
   </style>
 </head>
 <body>
-  <div id="puzzle-container"><div id="puzzle"></div></div>
+  <div id="puzzle"></div>
   <div id="controls">
     <button id="resetBtn">Reset</button>
     <button id="solveBtn">Solve</button>
@@ -85,114 +26,32 @@
   </div>
   <audio id="swoosh" src="/swoosh.mp3" preload="auto"></audio>
   <script>
-    const puzzle = document.getElementById('puzzle');
-    const resetBtn = document.getElementById('resetBtn');
-    const solveBtn = document.getElementById('solveBtn');
-    const moveCountEl = document.getElementById('moveCount');
-    const timerEl = document.getElementById('timer');
-    const toggleGuide = document.getElementById('toggleGuide');
-    const toggleNumbers = document.getElementById('toggleNumbers');
-    const swoosh = document.getElementById('swoosh');
-    const size = 4;
-    let tiles = [], emptyIndex = size*size-1, moves=0;
-    let startTime, timerInterval;
+    const size=4, puzzle=document.getElementById('puzzle');
+    const resetBtn=document.getElementById('resetBtn'), solveBtn=document.getElementById('solveBtn');
+    const moveCountEl=document.getElementById('moveCount'), timerEl=document.getElementById('timer');
+    const toggleGuide=document.getElementById('toggleGuide'), toggleNumbers=document.getElementById('toggleNumbers');
+    const swoosh=document.getElementById('swoosh');
+    let tiles=[], emptyIdx=size*size-1, moves=0, timerInterval, startTime;
 
-    function startTimer() {
-      clearInterval(timerInterval);
-      startTime = Date.now();
-      timerInterval = setInterval(() => {
-        const diff = Date.now() - startTime;
-        const s = Math.floor(diff/1000) % 60;
-        const m = Math.floor(diff/60000);
-        timerEl.textContent = `Time: ${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-      }, 500);
+    function startTimer(){ clearInterval(timerInterval); startTime=Date.now(); timerInterval=setInterval(()=>{ const d=Date.now()-startTime; const m=Math.floor(d/60000), s=Math.floor(d/1000)%60; timerEl.textContent=`Time: ${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; },500); }
+
+    function init(){ tiles=[]; moves=0; moveCountEl.textContent='Moves: 0'; puzzle.innerHTML=''; puzzle.style.setProperty('--guide-opacity', toggleGuide.checked?0.2:0);
+      for(let i=0;i<size*size;i++){ const div=document.createElement('div'); div.className='tile'; div.dataset.pos=i; if(i===emptyIdx) div.classList.add('empty'); else{ const x=i%size, y=Math.floor(i/size); div.style.backgroundPosition=`-${x*80}px -${y*80}px`; if(toggleNumbers.checked) div.textContent=i+1; } div.addEventListener('click',onTileClick); tiles.push(div); puzzle.appendChild(div); }
+      shuffle(); draw(); startTimer(); }
+
+    function shuffle(){ do{ for(let i=tiles.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [tiles[i].dataset.pos,tiles[j].dataset.pos]=[tiles[j].dataset.pos,tiles[i].dataset.pos]; } }while(!isSolvable()); }
+    function isSolvable(){ const arr=tiles.map(t=>t.dataset.pos==emptyIdx?0:parseInt(t.dataset.pos)+1); let inv=0; for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++) if(arr[i]&&arr[j]&&arr[i]>arr[j])inv++; const row=Math.floor(tiles.findIndex(t=>t.dataset.pos==emptyIdx)/size); return (inv+row)%2===0; }
+    function draw(){ puzzle.style.setProperty('--guide-opacity', toggleGuide.checked?0.2:0); tiles.forEach((t,i)=>{ const p=+t.dataset.pos; if(p==emptyIdx){ t.classList.add('empty'); t.style.backgroundPosition=''; t.textContent=''; } else{ t.classList.remove('empty'); const x=p%size, y=Math.floor(p/size); t.style.backgroundPosition=`-${x*80}px -${y*80}px`; t.textContent=toggleNumbers.checked?p+1:''; } puzzle.appendChild(t);} ); }
+    function onTileClick(e){ const idx=tiles.indexOf(e.target), p=+e.target.dataset.pos, em=tiles.find(t=>t.dataset.pos==emptyIdx), emIdx=tiles.indexOf(em);
+      const x1=p%size,y1=Math.floor(p/size), x2=emptyIdx%size,y2=Math.floor(emptyIdx/size);
+      if(Math.abs(x1-x2)+Math.abs(y1-y2)==1){ e.target.dataset.pos=emptyIdx; em.dataset.pos=p; moves++; moveCountEl.textContent='Moves: '+moves; draw(); swoosh.currentTime=0; swoosh.play(); if(checkWin()){ clearInterval(timerInterval); setTimeout(()=>alert(`Solved in ${moves} moves and ${timerEl.textContent.split(' ')[1]}!`),100);} }
     }
-
-    function createTiles() {
-      tiles=[]; moves=0;
-      moveCountEl.textContent='Moves: 0';
-      puzzle.style.setProperty('--guide-opacity', toggleGuide.checked?0.2:0);
-      for(let i=0;i<size*size;i++){
-        const tile=document.createElement('div');
-        tile.className='tile'; tile.dataset.original=i;
-        if(i===emptyIndex) tile.classList.add('empty');
-        else{
-          const x=i%size, y=Math.floor(i/size);
-          tile.style.backgroundPosition=`${-x*100/3}% ${-y*100/3}%`;
-          if(toggleNumbers.checked) tile.textContent=i+1;
-        }
-        tiles.push(tile);
-      }
-      shuffleTiles(); drawTiles(); startTimer();
-    }
-
-    function shuffleTiles(){
-      do{
-        for(let i=tiles.length-2;i>0;i--){
-          const j=Math.floor(Math.random()*(i+1));
-          [tiles[i],tiles[j]]=[tiles[j],tiles[i]];
-        }
-        emptyIndex=tiles.findIndex(t=>t.classList.contains('empty'));
-      }while(!isSolvable());
-    }
-
-    function isSolvable(){
-      const arr=tiles.map(t=>t.classList.contains('empty')?0:parseInt(t.dataset.original)+1);
-      let inv=0;for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++)
-        if(arr[i]&&arr[j]&&arr[i]>arr[j])inv++;
-      const row=Math.floor(emptyIndex/size);
-      return (inv+row)%2===0;
-    }
-
-    function drawTiles(){
-      puzzle.innerHTML='';
-      puzzle.style.setProperty('--guide-opacity', toggleGuide.checked?0.2:0);
-      tiles.forEach((tile,i)=>{
-        tile.dataset.index=i;
-        if(!tile.classList.contains('empty')) tile.textContent=toggleNumbers.checked?(parseInt(tile.dataset.original)+1):'';
-        puzzle.appendChild(tile);
-      });
-    }
-
-    function isAdjacent(i1,i2){
-      const x1=i1%size,y1=Math.floor(i1/size);
-      const x2=i2%size,y2=Math.floor(i2/size);
-      return Math.abs(x1-x2)+Math.abs(y1-y2)===1;
-    }
-
-    function moveTile(i){
-      const eIdx=tiles.findIndex(t=>t.classList.contains('empty'));
-      [tiles[i],tiles[eIdx]]=[tiles[eIdx],tiles[i]];
-      moves++; moveCountEl.textContent='Moves: '+moves;
-      drawTiles(); swoosh.currentTime=0; swoosh.play();
-      if(checkWin()){clearInterval(timerInterval);setTimeout(()=>alert(`Solved in ${moves} moves and ${timerEl.textContent.split(' ')[1]}!`),100);
-      }
-    }
-
-    function checkWin(){
-      return tiles.every((t,i)=>t.classList.contains('empty')?i===tiles.length-1:parseInt(t.dataset.original)===i);
-    }
-
-    function solvePuzzle(startArr){
-      // simple reverse solve: brute-force by reversing createTiles shuffle for demo
-      // full A* heavy on mobile; skip for now
-      return [];
-    }
-
-    puzzle.addEventListener('pointerdown', e=>{
-      const tile=e.target;
-      if(!tile.classList.contains('tile')||tile.classList.contains('empty'))return;
-      const i=tiles.indexOf(tile);
-      const eIdx=tiles.findIndex(t=>t.classList.contains('empty'));
-      if(isAdjacent(i,eIdx))moveTile(i);
-    });
-
-    resetBtn.addEventListener('click',createTiles);
-    solveBtn.addEventListener('click',()=>{tiles.sort((a,b)=>a.dataset.original-b.dataset.original);drawTiles();clearInterval(timerInterval);} );
-    toggleGuide.addEventListener('change',drawTiles);
-    toggleNumbers.addEventListener('change',drawTiles);
-
-    createTiles();
+    function checkWin(){ return tiles.every((t,i)=>+t.dataset.pos===i); }
+    resetBtn.addEventListener('click', init);
+    solveBtn.addEventListener('click', ()=>{ tiles.forEach((t,i)=>t.dataset.pos=i); draw(); clearInterval(timerInterval);} );
+    toggleGuide.addEventListener('change', draw);
+    toggleNumbers.addEventListener('change', draw);
+    init();
   </script>
 </body>
 </html>
