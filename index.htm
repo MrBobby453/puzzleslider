@@ -22,12 +22,11 @@
     .tile {
       width: 100px;
       height: 100px;
-      background-image: url('wreck_it_rach.png');
+      background-image: url('/mnt/data/wreck it rach.png');
       background-size: 400px 400px;
       cursor: pointer;
       border: 1px solid #000;
       user-select: none;
-      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -53,7 +52,7 @@
       for (let i = 0; i < size * size; i++) {
         const tile = document.createElement('div');
         tile.className = 'tile';
-        tile.dataset.index = i;
+        tile.dataset.original = i;
         if (i === emptyIndex) {
           tile.classList.add('empty');
         } else {
@@ -78,17 +77,15 @@
     }
 
     function isSolvable() {
-      const tileIndexes = tiles.map(tile => tile.classList.contains('empty') ? 0 : parseInt(tile.dataset.index) + 1);
-      let inversions = 0;
-      for (let i = 0; i < tileIndexes.length; i++) {
-        for (let j = i + 1; j < tileIndexes.length; j++) {
-          if (tileIndexes[i] && tileIndexes[j] && tileIndexes[i] > tileIndexes[j]) {
-            inversions++;
-          }
+      const arr = tiles.map(t => t.classList.contains('empty') ? 0 : parseInt(t.dataset.original) + 1);
+      let inv = 0;
+      for (let i = 0; i < arr.length; i++) {
+        for (let j = i + 1; j < arr.length; j++) {
+          if (arr[i] && arr[j] && arr[i] > arr[j]) inv++;
         }
       }
-      const emptyRow = Math.floor(emptyIndex / size);
-      return (inversions + emptyRow) % 2 === 0;
+      const row = Math.floor(emptyIndex / size);
+      return (inv + row) % 2 === 0;
     }
 
     function drawTiles() {
@@ -105,17 +102,26 @@
       return (Math.abs(x1 - x2) + Math.abs(y1 - y2)) === 1;
     }
 
+    function checkWin() {
+      for (let i = 0; i < tiles.length; i++) {
+        const orig = parseInt(tiles[i].dataset.original);
+        if (tiles[i].classList.contains('empty')) {
+          if (i !== tiles.length - 1) return false;
+        } else if (orig !== i) return false;
+      }
+      return true;
+    }
+
     puzzle.addEventListener('click', e => {
-      const clickedTile = e.target;
-      if (!clickedTile.classList.contains('tile') || clickedTile.classList.contains('empty')) return;
-
-      const clickedIndex = tiles.indexOf(clickedTile);
+      const tile = e.target;
+      if (!tile.classList.contains('tile') || tile.classList.contains('empty')) return;
+      const i = tiles.indexOf(tile);
       const emptyTile = tiles.find(t => t.classList.contains('empty'));
-      emptyIndex = tiles.indexOf(emptyTile);
-
-      if (isAdjacent(clickedIndex, emptyIndex)) {
-        [tiles[clickedIndex], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[clickedIndex]];
+      const eIdx = tiles.indexOf(emptyTile);
+      if (isAdjacent(i, eIdx)) {
+        [tiles[i], tiles[eIdx]] = [tiles[eIdx], tiles[i]];
         drawTiles();
+        if (checkWin()) alert('Congratulations! You solved the puzzle!');
       }
     });
 
