@@ -58,7 +58,40 @@
       transition: transform 0.3s ease;
       touch-action: none;
     }
+    .tile.animate {
+      animation: pop 0.3s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    .tile.sparkle::after {
+      content: '✨';
+      position: absolute;
+      font-size: 2vmin;
+      animation: sparkleFade 1s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+    @keyframes sparkleFade {
+      0% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: 1; transform: scale(1.5); }
+      100% { opacity: 0; transform: scale(0); }
+    }
     .empty { background: #000; cursor: default; }
+
+    #puzzle-container.shake {
+      animation: shakeIt 0.6s ease;
+    }
+    @keyframes shakeIt {
+      0%   { transform: translate(0, 0); }
+      25%  { transform: translate(-5px, 5px); }
+      50%  { transform: translate(5px, -5px); }
+      75%  { transform: translate(-5px, -5px); }
+      100% { transform: translate(0, 0); }
+    }
+
     #controls {
       margin-top: 10px;
       display: flex;
@@ -73,9 +106,19 @@
       border-radius: 6px;
       cursor: pointer;
       color: white;
+      transition: transform 0.2s ease;
     }
     #controls button:hover {
       background: #666;
+    }
+    #solveBtn.animated {
+      animation: solveBounce 0.4s ease;
+    }
+    @keyframes solveBounce {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.3) rotate(-5deg); }
+      60%  { transform: scale(0.9) rotate(3deg); }
+      100% { transform: scale(1); }
     }
     #controls label, #timer, #moveCount {
       font-size: 14px;
@@ -97,6 +140,7 @@
   <audio id="swoosh" src="swoosh.mp3" preload="auto"></audio>
   <script>
     const puzzle = document.getElementById('puzzle');
+    const puzzleContainer = document.getElementById('puzzle-container');
     const resetBtn = document.getElementById('resetBtn');
     const solveBtn = document.getElementById('solveBtn');
     const moveCountEl = document.getElementById('moveCount');
@@ -162,12 +206,10 @@
       puzzle.style.setProperty('--guide-opacity', toggleGuide.checked ? 0.2 : 0);
       tiles.forEach((tile, i) => {
         tile.dataset.index = i;
-
         const original = parseInt(tile.dataset.original);
         const x = original % size;
         const y = Math.floor(original / size);
         tile.style.backgroundPosition = `${-x * 100 / (size - 1)}% ${-y * 100 / (size - 1)}%`;
-
         tile.textContent = (!tile.classList.contains('empty') && toggleNumbers.checked) ? (original + 1) : '';
         puzzle.appendChild(tile);
       });
@@ -186,7 +228,17 @@
       drawTiles(); swoosh.currentTime = 0; swoosh.play();
       if (checkWin()) {
         clearInterval(timerInterval);
-        setTimeout(() => alert(`Solved in ${moves} moves and ${timerEl.textContent.split(' ')[1]}!`), 100);
+        puzzleContainer.classList.add('shake');
+        tiles.forEach(t => {
+          if (!t.classList.contains('empty')) {
+            t.classList.add('sparkle');
+            setTimeout(() => t.classList.remove('sparkle'), 1000);
+          }
+        });
+        setTimeout(() => {
+          puzzleContainer.classList.remove('shake');
+          alert(`🎉 Solved in ${moves} moves and ${timerEl.textContent.split(' ')[1]}!`);
+        }, 600);
       }
     }
 
@@ -203,10 +255,30 @@
     });
 
     resetBtn.addEventListener('click', createTiles);
+
     solveBtn.addEventListener('click', () => {
       tiles.sort((a, b) => a.dataset.original - b.dataset.original);
-      drawTiles(); clearInterval(timerInterval);
+      drawTiles();
+      clearInterval(timerInterval);
+
+      // Animate button
+      solveBtn.classList.add('animated');
+      setTimeout(() => solveBtn.classList.remove('animated'), 400);
+
+      // Simulate winning state
+      puzzleContainer.classList.add('shake');
+      tiles.forEach(t => {
+        if (!t.classList.contains('empty')) {
+          t.classList.add('sparkle');
+          setTimeout(() => t.classList.remove('sparkle'), 1000);
+        }
+      });
+      setTimeout(() => {
+        puzzleContainer.classList.remove('shake');
+        alert(`🎉 Puzzle auto-solved!`);
+      }, 600);
     });
+
     toggleGuide.addEventListener('change', drawTiles);
     toggleNumbers.addEventListener('change', drawTiles);
 
