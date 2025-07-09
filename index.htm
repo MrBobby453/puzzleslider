@@ -173,14 +173,20 @@ function drawTiles() {
     const x = original % size;
     const y = Math.floor(original / size);
     tile.style.backgroundImage = `url(${currentImage})`;
+
+    // Fix background size: gridSize * 100% ensures the full image is spread over all tiles
     tile.style.backgroundSize = `${size * 100}% ${size * 100}%`;
-    tile.style.backgroundPosition = `${(-x * 100) / (size - 1)}% ${(-y * 100) / (size - 1)}%`;
+
+    // Fix background position: use tile's original coordinates (x,y)
+    tile.style.backgroundPosition = `${(x * 100) / (size - 1)}% ${(y * 100) / (size - 1)}%`;
 
     tile.textContent =
       !tile.classList.contains('empty') && toggleNumbers.checked ? original + 1 : '';
+
     puzzle.appendChild(tile);
   });
 }
+
 
 function isAdjacent(i1, i2) {
   const x1 = i1 % size, y1 = Math.floor(i1 / size);
