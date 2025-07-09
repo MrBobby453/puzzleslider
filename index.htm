@@ -124,7 +124,7 @@
       for (let i = 0; i < size * size; i++) {
         const tile = document.createElement('div');
         tile.className = 'tile';
-        tile.dataset.original = i.toString(); // fixed image reference
+        tile.dataset.original = i.toString();
         if (i === emptyIndex) tile.classList.add('empty');
         tiles.push(tile);
       }
@@ -229,7 +229,11 @@
 
     resetBtn.addEventListener('click', () => {
       createTiles();
-      shuffleTiles();
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          shuffleTiles();
+        }, 100);
+      });
     });
 
     solveBtn.addEventListener('click', () => {
@@ -244,8 +248,13 @@
 
     toggleNumbers.addEventListener('change', drawTiles);
 
+    // Initial setup
     createTiles();
-    shuffleTiles();
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        shuffleTiles();
+      }, 100);
+    });
   </script>
 </body>
 </html>
