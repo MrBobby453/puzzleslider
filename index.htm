@@ -1,85 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Slider Puzzle Game with Animated Shuffle</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<style>
-  body {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: #222;
-    margin: 0;
-    color: white;
-    touch-action: none;
-  }
-  #puzzle-container {
-    position: relative;
-    width: 90vmin;
-    height: 90vmin;
-    max-width: 400px;
-    max-height: 400px;
-  }
-  #puzzle {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: 2px;
-    width: 100%;
-    height: 100%;
-    position: relative;
-  }
-  .tile {
-    position: relative;
-    background-image: url('wreck_it_rach.png');
-    background-size: 400% 400%;
-    cursor: pointer;
-    border: 1px solid #000;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2vmin;
-    z-index: 1;
-    touch-action: none;
-    transition: transform 0.3s ease;
-  }
-  .empty {
-    background: #000;
-    cursor: default;
-  }
-  #controls {
-    margin-top: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-  }
-  #controls button {
-    background: #444;
-    border: 1px solid #888;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    color: white;
-    transition: background 0.2s ease;
-  }
-  #controls button:hover {
-    background: #666;
-  }
-  #controls label,
-  #timer,
-  #moveCount {
-    font-size: 14px;
-    color: white;
-  }
-  input[type='checkbox'] {
-    transform: scale(1.2);
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>Slider Puzzle Game with Animated Shuffle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #222;
+      margin: 0;
+      color: white;
+      touch-action: none;
+    }
+    #puzzle-container {
+      position: relative;
+      width: 90vmin;
+      height: 90vmin;
+      max-width: 400px;
+      max-height: 400px;
+    }
+    #puzzle {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 2px;
+      width: 100%;
+      height: 100%;
+    }
+    .tile {
+      background-image: url('wreck_it_rach.png');
+      background-size: 400% 400%;
+      cursor: pointer;
+      border: 1px solid #000;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2vmin;
+      z-index: 1;
+      touch-action: none;
+      transition: transform 0.3s ease;
+    }
+    .empty {
+      background: #000;
+      cursor: default;
+    }
+    #controls {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    #controls button {
+      background: #444;
+      border: 1px solid #888;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: white;
+      transition: background 0.2s ease;
+    }
+    #controls button:hover {
+      background: #666;
+    }
+    #controls label,
+    #timer,
+    #moveCount {
+      font-size: 14px;
+      color: white;
+    }
+    input[type='checkbox'] {
+      transform: scale(1.2);
+    }
+  </style>
 </head>
 <body>
   <div id="puzzle-container">
@@ -92,180 +90,162 @@
     <span id="timer">Time: 00:00</span>
     <label><input type="checkbox" id="toggleNumbers" checked /> Numbers</label>
   </div>
-<script>
-  const puzzle = document.getElementById('puzzle');
-  const resetBtn = document.getElementById('resetBtn');
-  const solveBtn = document.getElementById('solveBtn');
-  const moveCountEl = document.getElementById('moveCount');
-  const timerEl = document.getElementById('timer');
-  const toggleNumbers = document.getElementById('toggleNumbers');
-  const size = 4;
-  let tiles = [];
-  let emptyIndex = size * size - 1;
-  let moves = 0;
-  let startTime, timerInterval;
 
-  function startTimer() {
-    clearInterval(timerInterval);
-    startTime = Date.now();
-    timerInterval = setInterval(() => {
-      const diff = Date.now() - startTime;
-      const s = Math.floor(diff / 1000) % 60;
-      const m = Math.floor(diff / 60000);
-      timerEl.textContent = `Time: ${m.toString().padStart(2, '0')}:${s
-        .toString()
-        .padStart(2, '0')}`;
-    }, 500);
-  }
+  <script>
+    const puzzle = document.getElementById('puzzle');
+    const resetBtn = document.getElementById('resetBtn');
+    const solveBtn = document.getElementById('solveBtn');
+    const moveCountEl = document.getElementById('moveCount');
+    const timerEl = document.getElementById('timer');
+    const toggleNumbers = document.getElementById('toggleNumbers');
+    const size = 4;
+    let tiles = [];
+    let emptyIndex = size * size - 1;
+    let moves = 0;
+    let startTime, timerInterval;
 
-  function createTiles() {
-    tiles = [];
-    moves = 0;
-    moveCountEl.textContent = 'Moves: 0';
-    for (let i = 0; i < size * size; i++) {
-      const tile = document.createElement('div');
-      tile.className = 'tile';
-      tile.dataset.original = i.toString();
-      if (i === emptyIndex) tile.classList.add('empty');
-      tiles.push(tile);
-    }
-    drawTiles();
-  }
-
-  // Draw tiles in their current order (array order)
-  function drawTiles() {
-    puzzle.innerHTML = '';
-    tiles.forEach((tile, i) => {
-      tile.dataset.index = i.toString();
-
-      const original = parseInt(tile.dataset.original, 10);
-      const x = original % size;
-      const y = Math.floor(original / size);
-      tile.style.backgroundPosition = `${(-x * 100) / (size - 1)}% ${
-        (-y * 100) / (size - 1)
-      }%`;
-
-      tile.textContent =
-        !tile.classList.contains('empty') && toggleNumbers.checked
-          ? (original + 1).toString()
-          : '';
-      tile.style.order = ''; // reset any flex order
-      puzzle.appendChild(tile);
-    });
-  }
-
-  // Swap two tiles in the array and redraw with animation
-  async function swapTiles(i, j) {
-    // Animate by swapping transform positions
-    const tileA = tiles[i];
-    const tileB = tiles[j];
-
-    // Get bounding rects for animation offsets
-    const rectA = tileA.getBoundingClientRect();
-    const rectB = tileB.getBoundingClientRect();
-
-    const dx = rectB.left - rectA.left;
-    const dy = rectB.top - rectA.top;
-
-    // Apply translate to swap visually
-    tileA.style.transition = 'transform 0.3s ease';
-    tileB.style.transition = 'transform 0.3s ease';
-
-    tileA.style.transform = `translate(${dx}px, ${dy}px)`;
-    tileB.style.transform = `translate(${-dx}px, ${-dy}px)`;
-
-    // Wait for animation to complete
-    await new Promise((resolve) => setTimeout(resolve, 310));
-
-    // Clear transforms and transitions
-    tileA.style.transition = '';
-    tileB.style.transition = '';
-    tileA.style.transform = '';
-    tileB.style.transform = '';
-
-    // Swap tiles in array
-    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
-
-    drawTiles();
-  }
-
-  function isAdjacent(i1, i2) {
-    const x1 = i1 % size,
-      y1 = Math.floor(i1 / size);
-    const x2 = i2 % size,
-      y2 = Math.floor(i2 / size);
-    return Math.abs(x1 - x2) + Math.abs(y1 - y2) === 1;
-  }
-
-  async function shuffleTiles() {
-    // Start from solved state, then make 100 random valid moves with animation
-    let emptyPos = emptyIndex;
-    for (let i = 0; i < 100; i++) {
-      // Get adjacent tiles indices to emptyPos
-      const neighbors = [];
-      if (emptyPos % size > 0) neighbors.push(emptyPos - 1);
-      if (emptyPos % size < size - 1) neighbors.push(emptyPos + 1);
-      if (emptyPos - size >= 0) neighbors.push(emptyPos - size);
-      if (emptyPos + size < size * size) neighbors.push(emptyPos + size);
-
-      // Pick random neighbor to swap
-      const swapIndex = neighbors[Math.floor(Math.random() * neighbors.length)];
-
-      await swapTiles(emptyPos, swapIndex);
-      emptyPos = swapIndex;
-    }
-    emptyIndex = emptyPos;
-    moves = 0;
-    moveCountEl.textContent = `Moves: ${moves}`;
-    startTimer();
-  }
-
-  function moveTile(i) {
-    const eIdx = tiles.findIndex((t) => t.classList.contains('empty'));
-    if (!isAdjacent(i, eIdx)) return;
-    [tiles[i], tiles[eIdx]] = [tiles[eIdx], tiles[i]];
-    moves++;
-    moveCountEl.textContent = 'Moves: ' + moves;
-    drawTiles();
-    if (checkWin()) {
+    function startTimer() {
       clearInterval(timerInterval);
-      alert(`🎉 Solved in ${moves} moves and ${timerEl.textContent.split(' ')[1]}!`);
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const diff = Date.now() - startTime;
+        const s = Math.floor(diff / 1000) % 60;
+        const m = Math.floor(diff / 60000);
+        timerEl.textContent = `Time: ${m.toString().padStart(2, '0')}:${s
+          .toString()
+          .padStart(2, '0')}`;
+      }, 500);
     }
-  }
 
-  function checkWin() {
-    return tiles.every((t, i) =>
-      t.classList.contains('empty') ? i === tiles.length - 1 : parseInt(t.dataset.original) === i
-    );
-  }
+    function createTiles() {
+      tiles = [];
+      moves = 0;
+      moveCountEl.textContent = 'Moves: 0';
+      for (let i = 0; i < size * size; i++) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.dataset.original = i.toString(); // fixed image reference
+        if (i === emptyIndex) tile.classList.add('empty');
+        tiles.push(tile);
+      }
+      drawTiles();
+    }
 
-  puzzle.addEventListener('pointerdown', (e) => {
-    const tile = e.target;
-    if (!tile.classList.contains('tile') || tile.classList.contains('empty')) return;
-    const i = tiles.indexOf(tile);
-    moveTile(i);
-  });
+    function drawTiles() {
+      puzzle.innerHTML = '';
+      tiles.forEach((tile, i) => {
+        tile.dataset.index = i.toString();
 
-  resetBtn.addEventListener('click', () => {
+        const original = parseInt(tile.dataset.original, 10);
+        const x = original % size;
+        const y = Math.floor(original / size);
+        tile.style.backgroundPosition = `${(-x * 100) / (size - 1)}% ${(-y * 100) / (size - 1)}%`;
+
+        tile.textContent =
+          !tile.classList.contains('empty') && toggleNumbers.checked
+            ? (original + 1).toString()
+            : '';
+        puzzle.appendChild(tile);
+      });
+    }
+
+    async function swapTiles(i, j) {
+      const tileA = tiles[i];
+      const tileB = tiles[j];
+
+      const rectA = tileA.getBoundingClientRect();
+      const rectB = tileB.getBoundingClientRect();
+
+      const dx = rectB.left - rectA.left;
+      const dy = rectB.top - rectA.top;
+
+      tileA.style.transition = 'transform 0.3s ease';
+      tileB.style.transition = 'transform 0.3s ease';
+
+      tileA.style.transform = `translate(${dx}px, ${dy}px)`;
+      tileB.style.transform = `translate(${-dx}px, ${-dy}px)`;
+
+      await new Promise((resolve) => setTimeout(resolve, 310));
+
+      tileA.style.transition = '';
+      tileB.style.transition = '';
+      tileA.style.transform = '';
+      tileB.style.transform = '';
+
+      [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+      drawTiles();
+    }
+
+    function isAdjacent(i1, i2) {
+      const x1 = i1 % size, y1 = Math.floor(i1 / size);
+      const x2 = i2 % size, y2 = Math.floor(i2 / size);
+      return Math.abs(x1 - x2) + Math.abs(y1 - y2) === 1;
+    }
+
+    async function shuffleTiles() {
+      let emptyPos = emptyIndex;
+      for (let i = 0; i < 100; i++) {
+        const neighbors = [];
+        if (emptyPos % size > 0) neighbors.push(emptyPos - 1);
+        if (emptyPos % size < size - 1) neighbors.push(emptyPos + 1);
+        if (emptyPos - size >= 0) neighbors.push(emptyPos - size);
+        if (emptyPos + size < size * size) neighbors.push(emptyPos + size);
+
+        const swapIndex = neighbors[Math.floor(Math.random() * neighbors.length)];
+        await swapTiles(emptyPos, swapIndex);
+        emptyPos = swapIndex;
+      }
+      emptyIndex = emptyPos;
+      moves = 0;
+      moveCountEl.textContent = `Moves: ${moves}`;
+      startTimer();
+    }
+
+    function moveTile(i) {
+      const eIdx = tiles.findIndex((t) => t.classList.contains('empty'));
+      if (!isAdjacent(i, eIdx)) return;
+      [tiles[i], tiles[eIdx]] = [tiles[eIdx], tiles[i]];
+      moves++;
+      moveCountEl.textContent = 'Moves: ' + moves;
+      drawTiles();
+      if (checkWin()) {
+        clearInterval(timerInterval);
+        alert(`🎉 Solved in ${moves} moves and ${timerEl.textContent.split(' ')[1]}!`);
+      }
+    }
+
+    function checkWin() {
+      return tiles.every((t, i) =>
+        t.classList.contains('empty') ? i === tiles.length - 1 : parseInt(t.dataset.original) === i
+      );
+    }
+
+    puzzle.addEventListener('pointerdown', (e) => {
+      const tile = e.target;
+      if (!tile.classList.contains('tile') || tile.classList.contains('empty')) return;
+      const i = tiles.indexOf(tile);
+      moveTile(i);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      createTiles();
+      shuffleTiles();
+    });
+
+    solveBtn.addEventListener('click', () => {
+      tiles.sort((a, b) => parseInt(a.dataset.original) - parseInt(b.dataset.original));
+      drawTiles();
+      clearInterval(timerInterval);
+      alert('🎉 Puzzle solved!');
+      moves = 0;
+      moveCountEl.textContent = 'Moves: 0';
+      timerEl.textContent = 'Time: 00:00';
+    });
+
+    toggleNumbers.addEventListener('change', drawTiles);
+
     createTiles();
     shuffleTiles();
-  });
-
-  solveBtn.addEventListener('click', () => {
-    // Reset to solved order instantly
-    tiles.sort((a, b) => parseInt(a.dataset.original) - parseInt(b.dataset.original));
-    drawTiles();
-    clearInterval(timerInterval);
-    alert('🎉 Puzzle solved!');
-    moves = 0;
-    moveCountEl.textContent = 'Moves: 0';
-    timerEl.textContent = 'Time: 00:00';
-  });
-
-  toggleNumbers.addEventListener('change', drawTiles);
-
-  createTiles();
-  shuffleTiles();
-</script>
+  </script>
 </body>
 </html>
