@@ -170,22 +170,24 @@ function drawTiles() {
   puzzle.innerHTML = '';
   tiles.forEach((tile, i) => {
     const original = parseInt(tile.dataset.original);
-    const x = original % size;
-    const y = Math.floor(original / size);
-    tile.style.backgroundImage = `url(${currentImage})`;
+    tile.textContent = '';
 
-    // Fix background size: gridSize * 100% ensures the full image is spread over all tiles
-    tile.style.backgroundSize = `${size * 100}% ${size * 100}%`;
-
-    // Fix background position: use tile's original coordinates (x,y)
-    tile.style.backgroundPosition = `${(x * 100) / (size - 1)}% ${(y * 100) / (size - 1)}%`;
-
-    tile.textContent =
-      !tile.classList.contains('empty') && toggleNumbers.checked ? original + 1 : '';
+    if (!tile.classList.contains('empty')) {
+      const x = original % size;
+      const y = Math.floor(original / size);
+      tile.style.backgroundImage = `url(${currentImage})`;
+      tile.style.backgroundSize = `${size * 100}% ${size * 100}%`;
+      tile.style.backgroundPosition = `${(x * 100) / (size - 1)}% ${(y * 100) / (size - 1)}%`;
+      tile.textContent = toggleNumbers.checked ? original + 1 : '';
+    } else {
+      tile.style.backgroundImage = '';
+      tile.style.backgroundColor = '#000';
+    }
 
     puzzle.appendChild(tile);
   });
 }
+
 
 
 function isAdjacent(i1, i2) {
